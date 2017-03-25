@@ -9,7 +9,7 @@ Base API URI
 ## Public Endpoints
 These endpoints can be used without authentication. No user login is required.
 
-### /api/playlist
+### api/playlist
 Used to retrieve a public playlist.
 
 **GET**
@@ -18,7 +18,7 @@ Used to retrieve a public playlist.
 
 * playlist_key - must match the firebase key for the given playlist.
 
-### /api/users/playlists
+### api/users/playlists
 Used to retrieve all of the public playlists for a user.
 
 **GET**
@@ -28,10 +28,10 @@ Used to retrieve all of the public playlists for a user.
 * user_key - must match the firebase key for the given user.
 
 
-## Login-In Required Endpoints
+## Login Required Endpoints
 These endpoints can only be used if the user is logged in.
 
-### /api/playlist/suggest
+### api/playlist/suggest
 Used to post suggestions to a public playlist.
 
 **POST**
@@ -47,8 +47,8 @@ These endpoints require authentication, and are for getting and posting data for
 The following header must be sent to verify the user:
     "Authentication": "Bearer {token}"
 
-### /api/me/profile
+### api/me/profile
 Used to retrieve the profile of the logged-in user.
 
-### /api/me/playlists
+### api/me/playlists
 Used to retrieve the playlists of the logged-in user. This endpoint should be used over the /api/users/playlists endpoint to ensure that private playlists are grabbed as well as public ones.

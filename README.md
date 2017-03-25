@@ -16,7 +16,7 @@ Used to retrieve a public playlist.
 
 *Parameters*
 
-    * playlist_key - must match the firebase key for the given playlist.
+* playlist_key - must match the firebase key for the given playlist.
 
 ### /api/users/playlists
 Used to retrieve all of the public playlists for a user.
@@ -25,7 +25,7 @@ Used to retrieve all of the public playlists for a user.
 
 *Parameters*
 
-    * user_key - must match the firebase key for the given user.
+* user_key - must match the firebase key for the given user.
 
 
 ## Login-In Required Endpoints
@@ -38,7 +38,7 @@ Used to post suggestions to a public playlist.
 
 *Parameters*
 
-    * playlist_key - must match the firebase key for the given playlist.
+* playlist_key - must match the firebase key for the given playlist.
 
 
 ## Private Endpoints

@@ -6,16 +6,16 @@ var _ = require('lodash');
 
 // Get current users playlists
 router.get('/', function (req, res, next) {
-    console.log('call to playlists');
-    var playlistsRef = firebase.database().ref('/playlists').orderByChild('creator_key').equalTo(req.firebaseUser.key);
-    playlistsRef.once('value', (snapshot) => {
-        var data = snapshot.val();
-        if (data) {
-            res.send(_.sortBy(data, ['creation_date']));
-        } else {
-            res.send({});
-        }
-    });
+  console.log('call to playlists');
+  var playlistsRef = firebase.database().ref('/playlists').orderByChild('creator_key').equalTo(req.firebaseUser.key);
+  playlistsRef.once('value', (snapshot) => {
+    var data = snapshot.val();
+    if (data) {
+      res.send(data);
+    } else {
+      res.send({});
+    }
+  });
 });
 
 

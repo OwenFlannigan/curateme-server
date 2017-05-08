@@ -22,41 +22,50 @@ router.get('/', function (req, res, next) {
 // Add a friend of the current user
 router.post('/', function (req, res, next) {
     console.log('call to add friend');
-    // might want to add a check to make sure that basic params are met
 
-    if (req.body.friend_key) {
-        var friendUserRef = firebase.database().ref('/users/' + req.body.friend_key);
-        friendUserRef.once('value', (snapshot) => {
+    if (req.query.usernames) {
+        var usersRef = firebase.database().ref('/users');
+        usersRef.once('value', (snapshot) => {
             var data = snapshot.val();
 
-            if (data) {
-                var userFriendsRef = firebase.database().ref('/users/' + req.firebaseUser.key + '/friends');
-                userFriendsRef.once('value', (snapshot) => {
-                    var friends = snapshot.val();
-
-                    var exists = _.filter(friends, function (o) { return o.friend_key == req.body.friend_key });
-
-                    if (!exists.length) {
-                        var newFriend = {};
-                        newFriend.friend_key = req.body.friend_key;
-                        newFriend.friend_name = data.name;
-                        var promise = userFriendsRef.push(newFriend);
-
-                        Promise.resolve(promise).then((value) => {
-                            res.send({ "message": data.name + " has been added as a friend." });
-                        });
-                    } else { // user is already added as a friend
-                        res.send({ "message": "You have already added this user as a friend." });
-                    }
+            var index = 0;
+            var usernames = req.query.usernames.split(',');
+            _.forEach(usernames, (username, key) => {
+                var userKey = _.findKey(data, (user) => {
+                    return user.username == username;
                 });
-            } else {
-                res.send({ "message": "We could not find the friend you were trying to add." });
-            }
-        });
+                console.log('username', username);
 
+                console.log('userkey', userKey);
+
+                var exists = req.firebaseUser.friends ? _.findKey(req.firebaseUser.friends, (user) => {
+                    if (user) {
+                        return user.friend_username == username;
+                    }
+                }) : false;
+
+                if (userKey && !exists && username != req.firebaseUser.username) {
+                    var userRef = firebase.database().ref('/users/' + req.firebaseUser.key);
+
+                    var newFriend = {
+                        friend_key: userKey,
+                        friend_name: data[userKey].name,
+                        friend_username: data[userKey].username
+                    };
+
+                    userRef.child('friends').push(newFriend);
+                }
+
+                if (index >= usernames.length - 1) {
+                    res.send({ "message": "Friend(s) added." });
+                }
+                index++;
+            });
+        });
     } else {
         res.send({ "error": "A query parameter was missing. Please be sure to include the friend_key parameter." });
     }
+
 });
 
 // Remove a friend for the current user
@@ -94,25 +103,20 @@ router.delete('/', function (req, res, next) {
 router.get('/activity', function (req, res, next) {
     console.log('call to get activity of my friends', req.firebaseUser);
 
-    var friends = _.compact(req.firebaseUser.friends);
-    // console.log('friends here', friends);
-    
-    // var friendsRef = firebase.database().ref('/users/' + req.firebaseUser.key + '/friends');
-    // friendsRef.once('value', (snapshot) => {
-    //     var data = snapshot.val();
+    var friends = req.firebaseUser.friends;
+
     var results = {};
 
     var usersRef = firebase.database().ref('/users');
     usersRef.once('value', (snapshot) => {
         var data = snapshot.val();
 
-        // console.log('friends', friends);
-        // console.log('data', data);
-
         _.forEach(friends, (value, key) => {
-            results[value.friend_key] = {
-                "recent_activity": data[value.friend_key].recent_activity,
-                "name": data[value.friend_key].name
+            if (data[value.friend_key].recent_activity) {
+                results[value.friend_key] = {
+                    "recent_activity": data[value.friend_key].recent_activity,
+                    "name": data[value.friend_key].name
+                }
             }
         });
 

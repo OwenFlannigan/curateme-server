@@ -39,91 +39,99 @@ router.get('/', function (req, res, next) {
                 //     return playlist.id;
                 // });
                 // var promises = [];
-                var playlists = [];
 
-                // for each playlist
-                _.forEach(body.items, (playlistValue, key) => {
-                    var playlistOptions = {
-                        url: playlistValue.tracks.href + '?fields=items.track',
-                        headers: {
-                            'Authorization': 'Bearer ' + access_token,
-                            'Content-Type': 'application/json'
-                        },
-                        json: true
-                    }
+                firebase.database().ref('/images').once('value', (imageSnapshot) => {
+                    var images = imageSnapshot.val();
 
-                    // request tracks
-                    return request.get(playlistOptions, (err, playlistRes, playlistBody) => {
-                        if (err) {
-                            res.send(err);
-                        }
-                        // console.log('inside', playlistBody.items);
-                        // console.log('after inside');
-                        var tracks = [];
-                        _.forEach(playlistBody.items, (trackValue, key) => {
-                            if (trackValue.track.id) {
-                                tracks.push(trackValue.track.id);
-                            }
-                        });
+                    var playlists = [];
 
-                        var newPlaylist = {
-                            best_used_for: 'listening',
-                            creation_date: firebase.database.ServerValue.TIMESTAMP,
-                            creator_key: req.firebaseUser.key,
-                            creator_name: req.firebaseUser.name,
-                            description: 'no description added',
-                            name: playlistValue.name,
-                            tracks: tracks,
-                            private: true,
-                            image: 'http://students.washington.edu/oflann/curator/playlist.png',
-                            spotify_playlist_id: playlistValue.id
+                    // for each playlist
+                    _.forEach(body.items, (playlistValue, key) => {
+                        var playlistOptions = {
+                            url: playlistValue.tracks.href + '?fields=items.track',
+                            headers: {
+                                'Authorization': 'Bearer ' + access_token,
+                                'Content-Type': 'application/json'
+                            },
+                            json: true
                         }
 
-
-                        playlists.push(newPlaylist);
-                        var playlistRef = firebase.database().ref('/playlists').orderByChild('spotify_playlist_id').equalTo(playlistValue.id);
-
-                        // var playlistRef = firebase.database().ref('/playlists');
-                        playlistRef.once('value', (snapshot) => {
-                            var data = snapshot.val();
-
-                            // var existingKey = null;
-                            // _.forEach(data, (value, key) => {
-                            //     if(value.spotify_playlist_id == playlistValue.id) {
-                            //         existingKey = key;
-                            //     }
-                            // });
-
-                            // var exists = _.find(data, ['spotify_playlist_id', playlistValue.id]);
-
-
-                            // console.log('esadsacdascsdcasdcascas', existingKey);
-
-                            if (!data) {
-                                firebase.database().ref('/playlists').push(newPlaylist);
-                            } else {
-                                var key = Object.keys(data)[0];
-                                data[key].tracks = _.union(data[key].tracks, tracks);
-
-                                var updateRef = firebase.database().ref('/playlists/' + key).set(data[key]);
-
-                                // console.log('update', snapshot);
-
-
-                                // firebase.database().ref('/playlists').orderByChild('spotify_playlist_id').equalTo(playlistValue.id).set(data);
+                        // request tracks
+                        return request.get(playlistOptions, (err, playlistRes, playlistBody) => {
+                            if (err) {
+                                res.send(err);
                             }
-                        });
 
-                        // playlistValue.tracks = tracks;
-                        // playlists.push(playlistValue);
-                        // // console.log(playlists);
-
-                        if (playlists.length == body.items.length) {
-                            res.send({
-                                "message": "Playlists imported!"
+                            var tracks = [];
+                            _.forEach(playlistBody.items, (trackValue, key) => {
+                                if (trackValue.track.id) {
+                                    tracks.push(trackValue.track.id);
+                                }
                             });
-                        }
+
+                            var image = _.values(images).length ? _.sample(_.values(images)) : 'http://students.washington.edu/oflann/curator/playlist.png';
+
+
+                            var newPlaylist = {
+                                best_used_for: 'listening',
+                                creation_date: firebase.database.ServerValue.TIMESTAMP,
+                                creator_key: req.firebaseUser.key,
+                                creator_name: req.firebaseUser.name,
+                                description: 'no description added',
+                                name: playlistValue.name,
+                                tracks: tracks,
+                                private: true,
+                                image: image,
+                                spotify_playlist_id: playlistValue.id
+                            }
+
+
+                            playlists.push(newPlaylist);
+                            var playlistRef = firebase.database().ref('/playlists').orderByChild('spotify_playlist_id').equalTo(playlistValue.id);
+
+                            // var playlistRef = firebase.database().ref('/playlists');
+                            playlistRef.once('value', (snapshot) => {
+                                var data = snapshot.val();
+
+                                // var existingKey = null;
+                                // _.forEach(data, (value, key) => {
+                                //     if(value.spotify_playlist_id == playlistValue.id) {
+                                //         existingKey = key;
+                                //     }
+                                // });
+
+                                // var exists = _.find(data, ['spotify_playlist_id', playlistValue.id]);
+
+
+                                // console.log('esadsacdascsdcasdcascas', existingKey);
+
+                                if (!data) {
+                                    firebase.database().ref('/playlists').push(newPlaylist);
+                                } else {
+                                    var key = Object.keys(data)[0];
+                                    data[key].tracks = _.union(data[key].tracks, tracks);
+
+                                    var updateRef = firebase.database().ref('/playlists/' + key).set(data[key]);
+
+                                    // console.log('update', snapshot);
+
+
+                                    // firebase.database().ref('/playlists').orderByChild('spotify_playlist_id').equalTo(playlistValue.id).set(data);
+                                }
+                            });
+
+                            // playlistValue.tracks = tracks;
+                            // playlists.push(playlistValue);
+                            // // console.log(playlists);
+
+                            if (playlists.length == body.items.length) {
+                                res.send({
+                                    "message": "Playlists imported!"
+                                });
+                            }
+                        });
                     });
+
 
 
                 });

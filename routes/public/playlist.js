@@ -17,15 +17,13 @@ router.get('/', function (req, res, next) {
         playlistRef.once('value', (snapshot) => {
             var data = snapshot.val();
             if (data) {
-                if (!data.private) {
-                    console.log(_.values(data.tracks));
+                if (!data.private || (req.firebaseUser && req.firebaseUser.key == data.creator_key)) {
 
                     var trackIds = querystring.stringify({
                         ids: _.values(data.tracks).slice(0, 50).join(',')
                     });
 
                     var url = 'https://api.spotify.com/v1/tracks?' + trackIds;
-                    console.log('url', url);
                     var options = {
                         url: url,
                         headers: {
@@ -39,9 +37,9 @@ router.get('/', function (req, res, next) {
                         if (error) {
                             res.send(err);
                         }
-                        console.log(body);
                         data.tracks = body.tracks;
 
+                        console.log('sending public playlist');
                         res.send(data);
                     });
 
@@ -109,20 +107,27 @@ router.put('/favorite', function (req, res) {
             var data = snapshot.val();
 
             var promise = '';
-            if (data.favorites && _.includes(data.favorites, req.firebaseUser.key)) {
-                data.favorites = (Object.keys(data.favorites)).filter((key) => {
-                    return data.favorites[key] != req.firebaseUser.key
-                });
+            var favoriteKey = _.findKey(data.favorites, (o) => {
+                return o == req.firebaseUser.username;
+            });
+
+            if (favoriteKey) {
+                delete data.favorites[favoriteKey];
             } else {
                 var key = playlistRef.child('favorites').push().key;
-                data.favorites = {};
-                data.favorites[key] = req.firebaseUser.key;
+                if(!data.favorites) {
+                    data.favorites = {};
+                }
+                data.favorites[key] = req.firebaseUser.username;
             }
 
             var promise = playlistRef.set(data);
 
             Promise.resolve(promise).then((value) => {
-                res.send({ "count": Object.keys(data.favorites).length });
+                res.send({
+                    "count": _.keys(data.favorites).length,
+                    "favorites": data.favorites
+                });
             });
         });
     } else {
@@ -135,7 +140,7 @@ router.put('/favorite', function (req, res) {
 router.post('/suggest', function (req, res, next) {
     console.log('call to add suggestions to playlist with key', req.body.playlist_key);
 
-    if (req.body.playlist_key) {
+    if (req.body.playlist_key && req.body.suggested_track) {
         var playlistRef = firebase.database().ref('/playlists/' + req.body.playlist_key);
         var suggestedTrack = req.body.suggested_track;
 
@@ -145,6 +150,7 @@ router.post('/suggest', function (req, res, next) {
 
         var playlistPromise = playlistRef.child('/suggested_tracks').push(suggestedTrack);
 
+        // Should probs remove this...
         Promise.resolve(playlistPromise)
             .then((value) => {
                 // Add playlist to user's playlist list
@@ -163,7 +169,7 @@ router.post('/suggest', function (req, res, next) {
                 res.send(error);
             });
     } else {
-        res.send({ "error": "A query parameter was missing. Please be sure to include the playlist_key parameter." });
+        res.send({ "error": "A query parameter was missing. Please be sure to include the playlist_key and suggested_track parameter." });
     }
 });
 

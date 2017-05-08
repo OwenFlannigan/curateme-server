@@ -23,7 +23,7 @@ firebase.initializeApp({
 
 // Route importing
 var index = require('./routes/index');
-var users = require('./routes/users');
+// var users = require('./routes/users');
 var search = require('./routes/search');
 var myProfile = require('./routes/private/profile');
 var myPlaylist = require('./routes/private/playlist');
@@ -32,7 +32,10 @@ var myFriends = require('./routes/private/friends');
 var myRecommendations = require('./routes/private/recommendations');
 var playlist = require('./routes/public/playlist');
 var playlists = require('./routes/public/playlists');
+var share = require('./routes/public/users/share');
+var users = require('./routes/public/users/users');
 var userPlaylists = require('./routes/public/users/playlists');
+var recommendations = require('./routes/public/recommendations');
 
 var spotifyLogin = require('./routes/spotify/login');
 var spotifyImport = require('./routes/spotify/import');
@@ -40,6 +43,10 @@ var spotifyImport = require('./routes/spotify/import');
 var youtubeSearch = require('./routes/youtube/search');
 
 var eventfulEvents = require('./routes/eventful/events');
+
+
+// Admin endpoints
+var photos = require('./routes/admin/photos');
 
 // cached tokens to save time and limit requests made to APIs
 var spotifyToken = '';
@@ -70,6 +77,7 @@ var setUser = function (req, res, next) {
       }
     });
     req.firebaseUser = firebaseUser;
+    console.log('user set successfully');
     return next();
   });
 };
@@ -127,7 +135,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // NO MORE ROUTES HERE
 app.use('/', index);
-app.use('/users', users);
+// app.use('/users', users);
 // MIDDLEWARE WON'T AFFECT THESE ROUTES
 
 /**  MIDDLEWARE  **/
@@ -136,12 +144,35 @@ app.use('/api/me/*', authenticate, setUser);
 // public, but requires a logged in user
 app.use('/api/playlist/suggest', authenticate, setUser);
 app.use('/api/playlist/favorite', authenticate, setUser);
+app.use('/api/users', authenticate, setUser, users);
+app.use('/api/users/share', authenticate, setUser, share);
+app.use('/api/recommendations', spotifyClientAuth, recommendations);
+// app.use('/api/recommendations/tracks', trackRecommendations);
+
 
 
 /** ROUTES **/
-// public routes fo here
+// public routes go here
 app.use('/api/search', search);
-app.use('/api/playlist', playlist);
+
+// Should refactor, but used to check if signed in
+app.use('/api/playlist', (req, res, next) => {
+  if (req.headers && req.headers.authorization) {
+    authenticate(req, res, next);
+  } else {
+    next();
+  }
+});
+
+app.use('/api/playlist', (req, res, next) => {
+  if(req.user && req.user.sub) {
+    setUser(req, res, next);
+  } else {
+    next();
+  }
+}); // check if signed in
+
+app.use('/api/playlist', playlist); // check if signed in
 app.use('/api/playlists', playlists);
 app.use('/api/users/playlists', userPlaylists);
 
@@ -160,6 +191,10 @@ app.use('/api/spotify/import', authenticate, setUser, spotifyImport);
 app.use('/api/youtube/search', youtubeSearch);
 
 app.use('/api/eventful/events', eventfulEvents);
+
+
+// admin endpoints (need to add auth)
+app.use('/api/admin/photos', photos);
 
 
 

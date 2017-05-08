@@ -93,28 +93,34 @@ router.get('/refresh/tracks', function (req, res, next) {
             var playlistData = snapshot.val();
 
             if (playlistData) {
-                var playlists = _.values(playlistData);
-                var randomPlaylist = playlists[Math.floor(Math.random() * playlists.length)];
+                var playlists = _.values(_.filter(playlistData, (playlist) => {
+                    return playlist.tracks;
+                }));
+                if (playlists) {// if they have at least one playlist that has tracks
+                    var randomPlaylist = playlists[Math.floor(Math.random() * playlists.length)];
 
-                var limit = Math.min(_.values(randomPlaylist.tracks).length, 5);
-                var seeds = _.shuffle(_.values(randomPlaylist.tracks)).slice(0, limit);
-                var reqOptions = {
-                    url: 'https://api.spotify.com/v1/recommendations?seed_tracks=' + seeds,
-                    headers: {
-                        'Authorization': 'Bearer ' + req.spotify_access_token
-                    },
-                    json: true
-                };
+                    var limit = Math.min(_.values(randomPlaylist.tracks).length, 5);
+                    var seeds = _.shuffle(_.values(randomPlaylist.tracks)).slice(0, limit);
+                    var reqOptions = {
+                        url: 'https://api.spotify.com/v1/recommendations?seed_tracks=' + seeds,
+                        headers: {
+                            'Authorization': 'Bearer ' + req.spotify_access_token
+                        },
+                        json: true
+                    };
 
-                request.get(reqOptions, function (err, innerRes, body) {
-                    var limit = Math.min(body.tracks.length, 30);
-                    tracks = _.shuffle(body.tracks).slice(0, limit);
-                    // respond for immediate use
-                    res.send(tracks);
+                    request.get(reqOptions, function (err, innerRes, body) {
+                        var limit = Math.min(body.tracks.length, 30);
+                        tracks = _.shuffle(body.tracks).slice(0, limit);
+                        // respond for immediate use
+                        res.send(tracks);
 
-                    // update firebase
-                    firebase.database().ref('/users/' + req.firebaseUser.key + '/recommended_tracks').set(_.mapValues(tracks, 'id'));
-                });
+                        // update firebase
+                        firebase.database().ref('/users/' + req.firebaseUser.key + '/recommended_tracks').set(_.mapValues(tracks, 'id'));
+                    });
+                } else {
+                    res.send({ "message": "Recommendations not updated, try again." });
+                }
             } else {
                 res.send({ "message": "Recommendations not updated, try again." });
             }
@@ -147,6 +153,7 @@ router.get('/refresh/tracks', function (req, res, next) {
 
             request.get(albumOptions, function (error, doubleInnerRes, innerBody) {
 
+
                 var tracks = innerBody.albums.map((album) => {
                     return album.tracks.items.map((track) => {
                         track.album = {
@@ -159,8 +166,10 @@ router.get('/refresh/tracks', function (req, res, next) {
                     });
                 });
 
+                tracks = _.shuffle(_.flatten(tracks));
+
                 var limit = Math.min(tracks.length, 30);
-                tracks = _.shuffle(_.flatten(tracks)).slice(0, limit);
+                tracks = tracks.slice(0, limit);
 
                 console.log('sending tracks', limit);
                 res.send(tracks);

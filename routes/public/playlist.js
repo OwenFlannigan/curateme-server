@@ -146,7 +146,7 @@ router.post('/suggest', function (req, res, next) {
 
         suggestedTrack.suggestion_date = firebase.database.ServerValue.TIMESTAMP;
         suggestedTrack.suggester_key = req.firebaseUser.key;
-        suggestedTrack.suggester_name = req.firebaseUser.name;
+        suggestedTrack.suggester_name = req.firebaseUser.username;
 
         var playlistPromise = playlistRef.child('/suggested_tracks').push(suggestedTrack);
 

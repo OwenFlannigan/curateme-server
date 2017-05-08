@@ -23,29 +23,43 @@ router.get('/', function (req, res, next) {
 router.post('/', function (req, res, next) {
   console.log('call to add playlist');
   // might want to add a check to make sure that basic params are met
+  console.log('4');
 
   var playlistsRef = firebase.database().ref('/playlists');
   var newPlaylist = req.body;
 
+  console.log('5');
+
   newPlaylist.creation_date = firebase.database.ServerValue.TIMESTAMP;
   newPlaylist.creator_key = req.firebaseUser.key;
-  newPlaylist.creator_name = req.firebaseUser.name;
+  newPlaylist.creator_name = req.firebaseUser.username;
+
+  console.log('6');
 
   var tracks = newPlaylist.tracks;
   delete newPlaylist.tracks;
 
+  console.log('7');
+  
   var key = playlistsRef.push().key;
+  console.log('8');
+  
   var updates = {};
+  console.log('9');
   updates[key] = newPlaylist;
+  console.log('10', updates);
 
 
   var playlistPromise = playlistsRef.update(updates);
 
-
+  console.log('1');
   Promise.resolve(playlistPromise)
     .then((value) => {
+    console.log('2');
 
       if (tracks && tracks.length) {
+      console.log('3');
+        
         var index = 0;
         _.forEach(tracks, (value, trackKey) => {
           firebase.database().ref('/playlists/' + key).child('tracks').push(value);
@@ -56,6 +70,8 @@ router.post('/', function (req, res, next) {
           index++;
         });
       } else {
+        console.log('4');
+        
         res.send({ "message": "Playlist has been created.", "key": key });
       }
 

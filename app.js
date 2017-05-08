@@ -44,6 +44,8 @@ var youtubeSearch = require('./routes/youtube/search');
 
 var eventfulEvents = require('./routes/eventful/events');
 
+var usernames = require('./routes/public/usernames');
+
 
 // Admin endpoints
 var photos = require('./routes/admin/photos');
@@ -69,13 +71,16 @@ var setUser = function (req, res, next) {
   userRef.once('value', (snapshot) => {
     var data = snapshot.val();
     var firebaseUser = {};
-    (Object.keys(data)).forEach((key) => {
-      if (data[key].id == req.user.sub) {
-
-        firebaseUser = data[key];
-        firebaseUser.key = key;
-      }
+    var key = _.findKey(data, (user) => {
+      return user.id == req.user.sub;
     });
+
+    firebaseUser = data[key];
+    firebaseUser.key = key;
+
+    console.log('setting user with', firebaseUser);
+
+    
     req.firebaseUser = firebaseUser;
     console.log('user set successfully');
     return next();
@@ -133,8 +138,9 @@ var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+
 // NO MORE ROUTES HERE
-app.use('/', index);
+// app.use('/', index);
 // app.use('/users', users);
 // MIDDLEWARE WON'T AFFECT THESE ROUTES
 
@@ -154,6 +160,7 @@ app.use('/api/recommendations', spotifyClientAuth, recommendations);
 /** ROUTES **/
 // public routes go here
 app.use('/api/search', search);
+app.use('/api/usernames', usernames);
 
 // Should refactor, but used to check if signed in
 app.use('/api/playlist', (req, res, next) => {
@@ -165,7 +172,7 @@ app.use('/api/playlist', (req, res, next) => {
 });
 
 app.use('/api/playlist', (req, res, next) => {
-  if(req.user && req.user.sub) {
+  if (req.user && req.user.sub) {
     setUser(req, res, next);
   } else {
     next();
@@ -197,6 +204,13 @@ app.use('/api/eventful/events', eventfulEvents);
 app.use('/api/admin/photos', photos);
 
 
+
+// Static site hosting of /build folder
+app.use(express.static('./build'));
+
+app.get('/*', function (req, res) {
+  res.sendFile(path.join(__dirname, './build', 'index.html'));
+});
 
 
 // catch 404 and forward to error handler

@@ -17,7 +17,7 @@ router.post('/', function (req, res, next) {
             var newMessage = {
                 from: {
                     key: req.firebaseUser.key,
-                    name: req.firebaseUser.name
+                    name: req.firebaseUser.username
                 },
                 playlist_key: req.query.playlist_key
             };

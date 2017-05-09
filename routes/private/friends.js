@@ -49,7 +49,6 @@ router.post('/', function (req, res, next) {
 
                     var newFriend = {
                         friend_key: userKey,
-                        friend_name: data[userKey].name,
                         friend_username: data[userKey].username
                     };
 
@@ -115,7 +114,7 @@ router.get('/activity', function (req, res, next) {
             if (data[value.friend_key].recent_activity) {
                 results[value.friend_key] = {
                     "recent_activity": data[value.friend_key].recent_activity,
-                    "name": data[value.friend_key].name
+                    "name": data[value.friend_key].username
                 }
             }
         });

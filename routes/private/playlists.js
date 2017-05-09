@@ -29,7 +29,7 @@ router.post('/', function (req, res, next) {
 
   newPlaylist.creation_date = firebase.database.ServerValue.TIMESTAMP;
   newPlaylist.creator_key = req.firebaseUser.key;
-  newPlaylist.creator_name = req.firebaseUser.name;
+  newPlaylist.creator_name = req.firebaseUser.username;
 
   var tracks = newPlaylist.tracks;
   delete newPlaylist.tracks;

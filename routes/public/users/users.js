@@ -11,7 +11,6 @@ router.get('/', function (req, res, next) {
 
       data = (Object.keys(data)).map((key) => {
           return {
-            name: data[key].name,
             key: key,
             avatar: data[key].avatar,
             username: data[key].username

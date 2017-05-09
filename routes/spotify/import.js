@@ -76,7 +76,7 @@ router.get('/', function (req, res, next) {
                                 best_used_for: 'listening',
                                 creation_date: firebase.database.ServerValue.TIMESTAMP,
                                 creator_key: req.firebaseUser.key,
-                                creator_name: req.firebaseUser.name,
+                                creator_name: req.firebaseUser.username,
                                 description: 'no description added',
                                 name: playlistValue.name,
                                 tracks: tracks,

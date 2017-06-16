@@ -15,12 +15,14 @@ router.get('/tracks', function (req, res, next) {
         var trackIds = querystring.stringify({
             ids: _.values(data).join(',')
         });
+        console.log('spot access', req.spotify_access_token);
 
         var url = 'https://api.spotify.com/v1/tracks?' + trackIds;
         var options = {
             url: url,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + req.spotify_access_token
             },
             json: true
         }

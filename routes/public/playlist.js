@@ -23,11 +23,13 @@ router.get('/', function (req, res, next) {
                         ids: _.values(data.tracks).slice(0, 50).join(',')
                     });
 
+                    console.log('accesstoken', req.spotify_access_token);
                     var url = 'https://api.spotify.com/v1/tracks?' + trackIds;
                     var options = {
                         url: url,
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + req.spotify_access_token,
                         },
                         json: true
                     }
@@ -37,9 +39,10 @@ router.get('/', function (req, res, next) {
                         if (error) {
                             res.send(err);
                         }
+                        console.log('track response', body);
                         data.tracks = body.tracks;
 
-                        console.log('sending public playlist');
+                        console.log('sending public playlist', data.tracks);
                         res.send(data);
                     });
 

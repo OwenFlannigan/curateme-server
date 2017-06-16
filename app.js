@@ -159,8 +159,8 @@ app.use('/api/recommendations', spotifyClientAuth, recommendations);
 
 /** ROUTES **/
 // public routes go here
-app.use('/api/search', search);
 app.use('/api/usernames', usernames);
+app.use('/api/search', spotifyClientAuth, search);
 
 // Should refactor, but used to check if signed in
 app.use('/api/playlist', (req, res, next) => {
@@ -179,7 +179,7 @@ app.use('/api/playlist', (req, res, next) => {
   }
 }); // check if signed in
 
-app.use('/api/playlist', playlist); // check if signed in
+app.use('/api/playlist', spotifyClientAuth, playlist); // check if signed in
 app.use('/api/playlists', playlists);
 app.use('/api/users/playlists', userPlaylists);
 
@@ -189,7 +189,7 @@ app.use('/api/me/playlist', myPlaylist);
 app.use('/api/me/playlists', myPlaylists);
 app.use('/api/me/friends', myFriends);
 app.use('/api/me/recommendations/refresh/tracks', spotifyClientAuth);
-app.use('/api/me/recommendations', myRecommendations);
+app.use('/api/me/recommendations', spotifyClientAuth, myRecommendations);
 
 
 app.use('/api/spotify', spotifyLogin); // done for all spotify, can be at top

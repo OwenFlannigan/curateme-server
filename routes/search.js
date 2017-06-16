@@ -21,7 +21,8 @@ router.get('/', function (req, res, next) {
         var options = {
             url: uri,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + req.spotify_access_token
             },
             json: true
         };

@@ -28,10 +28,10 @@ router.get('/', function (req, res, next) {
 
             // res.send(result);
             // var id = result.items[0].id.videoId;
-            var limit = Math.min(result.items.length, 50);
-            var ids = _.map(result.items.slice(0, limit), (o) => {
-                return o.id.videoId;
-            });
+            // var limit = Math.min(result.items.length, 50);
+            // var ids = _.map(result.items.slice(0, limit), (o) => {
+            //     return o.id.videoId;
+            // });
             // res.send(result);
 
             var singleResult = result.items[0];
@@ -71,6 +71,47 @@ router.get('/', function (req, res, next) {
     });
 
 });
+
+router.get('/multiple', function (req, res, next) {
+    console.log('call to search youtube with multiple tracks.');
+    var queries = req.query.q.split(',');
+    console.log('searching with query', queries);
+
+    queries = queries.map((query, index) => {
+        return index + '[%]' + query;
+    });
+
+    var videoResults = [];
+    var index = 0;
+    _.forEach(queries, (query, key) => {
+        var currentIndex = query.split('[%]')[0];
+        youTube.search(query.split('[%]')[1].split('[:trackId]')[0], 1, function (error, result) {
+            if (error) {
+                console.log(error);
+            } else {
+                var singleResult = result.items[0];
+
+                videoResults[currentIndex] = {
+                    "url": 'https://www.youtube.com/watch?v=' + singleResult.id,
+                    "image": singleResult.snippet.thumbnails.medium.url,
+                    "id": singleResult.id.videoId,
+                    "title": singleResult.snippet.title,
+                    "channelTitle": singleResult.snippet.channelTitle,
+                    "trackId": query.split('[:trackId]')[1]
+                };
+
+                if (index >= queries.length - 1) {
+                    res.send(videoResults);
+                }
+
+                index++;
+            }
+        });
+    });
+
+});
+
+
 
 module.exports = router;
 
